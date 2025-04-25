@@ -1,6 +1,16 @@
-// ✅ src/components/GridBuilder.jsx
 import React from 'react';
-import { Box, IconButton, Typography, TextField } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Checkbox,
+  FormControlLabel
+} from '@mui/material';
 import BorderColorIcon from '@mui/icons-material/BorderColor';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -12,19 +22,23 @@ const GridBuilder = ({
   setSelectedRowId,
   selectedCellId,
   setSelectedCellId,
-  theme
+  theme,
+  disabled = false
 }) => {
   const handleRowSelect = (rowId) => {
+    if (disabled) return;
     setSelectedRowId(rowId);
     setSelectedCellId(null);
   };
 
   const handleCellSelect = (rowId, cellId) => {
+    if (disabled) return;
     setSelectedRowId(rowId);
     setSelectedCellId(cellId);
   };
 
   const handleAddRowToEnd = () => {
+    if (disabled) return;
     const newRowId = `row-${Date.now()}`;
     const newRow = {
       id: newRowId,
@@ -98,7 +112,7 @@ const GridBuilder = ({
                   backgroundColor: isSelected ? theme?.cellBg : theme?.cellBg,
                   borderLeft: `1px solid ${theme?.borderColor}`,
                   borderRight: `1px solid ${theme?.borderColor}`,
-                  cursor: 'pointer',
+                  cursor: disabled ? 'default' : 'pointer',
                   position: 'relative',
                   textAlign: control?.hAlign || 'left'
                 }}
@@ -120,7 +134,9 @@ const GridBuilder = ({
                       fontFamily: theme?.fontFamily
                     }}
                   >
-                    <ReactMarkdown rehypePlugins={[rehypeRaw]}>{control.content || ''}</ReactMarkdown>
+                    <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                      {control.content || ''}
+                    </ReactMarkdown>
                   </Box>
                 ) : control?.type === 'input' ? (
                   <Box width={control.hAlign === 'stretch' ? '100%' : 'fit-content'} minWidth={160}>
@@ -133,6 +149,31 @@ const GridBuilder = ({
                       variant="outlined"
                     />
                   </Box>
+                ) : control?.type === 'dropdown' ? (
+                  <FormControl size="small" sx={{ minWidth: 160, width: control.hAlign === 'stretch' ? '100%' : 'fit-content' }}>
+                    <InputLabel>{control.label || 'Select'}</InputLabel>
+                    <Select label={control.label || 'Select'} defaultValue="">
+                      {control.options?.map((opt, idx) => (
+                        <MenuItem key={idx} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : control?.type === 'date' ? (
+                  <Box width={control.hAlign === 'stretch' ? '100%' : 'fit-content'} minWidth={160}>
+                    <TextField
+                      fullWidth={control.hAlign === 'stretch'}
+                      type="date"
+                      label={control.label || 'Select Date'}
+                      size="small"
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Box>
+                ) : control?.type === 'checkbox' ? (
+                  <FormControlLabel
+                    control={<Checkbox checked={control.checked || false} disabled />}
+                    label={control.label || 'Checkbox'}
+                  />
                 ) : (
                   <Typography variant="body2" color="text.secondary">Empty Cell</Typography>
                 )}
@@ -144,6 +185,7 @@ const GridBuilder = ({
                     e.stopPropagation();
                     handleCellSelect(row.id, cell.id);
                   }}
+                  disabled={disabled}
                 >
                   <BorderColorIcon fontSize="small" />
                 </IconButton>
@@ -163,6 +205,7 @@ const GridBuilder = ({
               zIndex: 2
             }}
             onClick={() => handleRowSelect(row.id)}
+            disabled={disabled}
           >
             <BorderColorIcon fontSize="small" />
           </IconButton>
@@ -174,7 +217,11 @@ const GridBuilder = ({
           <IconButton
             onClick={handleAddRowToEnd}
             color="primary"
-            sx={{ backgroundColor: theme?.controlBg, border: `1px dashed ${theme?.borderColor}` }}
+            sx={{
+              backgroundColor: theme?.controlBg,
+              border: `1px dashed ${theme?.borderColor}`
+            }}
+            disabled={disabled}
           >
             <BorderColorIcon />
           </IconButton>

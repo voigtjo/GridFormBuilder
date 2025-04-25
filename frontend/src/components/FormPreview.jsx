@@ -1,10 +1,30 @@
-// ✅ src/components/FormPreview.jsx
-import React from 'react';
-import { Box, Typography, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Checkbox,
+  FormControlLabel
+} from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 
 const FormPreview = ({ rows, theme }) => {
+  const [dropdownValues, setDropdownValues] = useState({});
+  const [checkboxStates, setCheckboxStates] = useState({});
+
+  const handleDropdownChange = (cellId, value) => {
+    setDropdownValues((prev) => ({ ...prev, [cellId]: value }));
+  };
+
+  const handleCheckboxChange = (cellId, checked) => {
+    setCheckboxStates((prev) => ({ ...prev, [cellId]: checked }));
+  };
+
   const getHorizontalAlign = (align) => {
     switch (align) {
       case 'center': return 'center';
@@ -111,10 +131,44 @@ const FormPreview = ({ rows, theme }) => {
                       size="small"
                       label={control.label || 'Input'}
                       type={control.inputType === 'integer' ? 'number' : control.inputType}
-                      inputProps={control.inputType === 'integer' ? { step: 1 } : { step: 'any' }}
+                      inputProps={{ readOnly: true, ...(control.inputType === 'integer' ? { step: 1 } : { step: 'any' }) }}
                       variant="outlined"
                     />
                   </Box>
+                ) : control?.type === 'dropdown' ? (
+                  <FormControl size="small" sx={{ minWidth: 160, width: control.hAlign === 'stretch' ? '100%' : 'fit-content' }}>
+                    <InputLabel>{control.label || 'Select'}</InputLabel>
+                    <Select
+                      label={control.label || 'Select'}
+                      value={dropdownValues[cell.id] || ''}
+                      onChange={(e) => handleDropdownChange(cell.id, e.target.value)}
+                    >
+                      {control.options?.map((opt, idx) => (
+                        <MenuItem key={idx} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : control?.type === 'date' ? (
+                  <Box width={control.hAlign === 'stretch' ? '100%' : 'fit-content'} minWidth={160}>
+                    <TextField
+                      fullWidth={control.hAlign === 'stretch'}
+                      type="date"
+                      label={control.label || 'Select Date'}
+                      size="small"
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Box>
+                ) : control?.type === 'checkbox' ? (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={checkboxStates[cell.id] ?? control.checked ?? false}
+                        onChange={(e) => handleCheckboxChange(cell.id, e.target.checked)}
+                      />
+                    }
+                    label={control.label || 'Checkbox'}
+                  />
                 ) : null}
               </Box>
             );

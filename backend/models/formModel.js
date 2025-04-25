@@ -7,8 +7,15 @@ const controlSchema = new mongoose.Schema({
   label: String,
   inputType: String,
   hAlign: String,
-  vAlign: String
+  vAlign: String,
+  options: [
+    {
+      label: String,
+      value: String
+    }
+  ]
 }, { _id: false });
+
 
 const cellSchema = new mongoose.Schema({
   id: String,

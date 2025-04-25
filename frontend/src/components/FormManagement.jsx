@@ -1,7 +1,7 @@
-// src/components/FormManagement.jsx
-import React, { useState } from 'react';
+// ✅ FormManagement.jsx now shows unsaved changes with yellow header
+import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, MenuItem, Select, TextField, IconButton, Typography
+  Box, MenuItem, Select, TextField, IconButton, Typography
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -19,15 +19,39 @@ const FormManagement = ({
   onSaveForm,
   theme,
   setTheme,
-  currentRows
+  currentRows,
+  formReady,
+  setRows,
+  setFormReady,
+  clearNewFormNameTrigger,
+  onClearNewFormNameHandled,
+  hasUnsavedChanges
 }) => {
   const [newFormName, setNewFormName] = useState('');
+  const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreate = () => {
-    if (newFormName) {
-      onCreateForm(newFormName);
+  useEffect(() => {
+    if (clearNewFormNameTrigger) {
       setNewFormName('');
+      setCreating(false);
+      onClearNewFormNameHandled();
+    }
+  }, [clearNewFormNameTrigger]);
+
+  const handleNewClick = () => {
+    setCreating(true);
+    setFormReady(false);
+    setFormName('');
+    setRows([]);
+    setNewFormName('');
+  };
+
+  const handleConfirmCreate = async () => {
+    if (newFormName.trim()) {
+      setFormName(newFormName);
+      await onCreateForm(newFormName);
+      setCreating(false);
     }
   };
 
@@ -40,7 +64,6 @@ const FormManagement = ({
     a.href = url;
     a.download = `${formName || 'form'}.json`;
     a.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -52,7 +75,15 @@ const FormManagement = ({
   };
 
   return (
-    <Box display="flex" alignItems="center" p={1} bgcolor="#f0f0f0" borderBottom="1px solid #ccc">
+    <Box
+      display="flex"
+      alignItems="center"
+      p={1}
+      sx={{
+        bgcolor: hasUnsavedChanges ? '#fff9c4' : '#f0f0f0',
+        borderBottom: '1px solid #ccc'
+      }}
+    >
       <Typography variant="h6" mr={2}>Form Builder</Typography>
 
       <Select
@@ -67,15 +98,28 @@ const FormManagement = ({
         ))}
       </Select>
 
+      <IconButton onClick={handleNewClick} color="primary" sx={{ mr: 1 }}>
+        <AddIcon />
+      </IconButton>
+
       <TextField
         size="small"
         label="New Form Name"
         value={newFormName}
         onChange={(e) => setNewFormName(e.target.value)}
         sx={{ mr: 1 }}
+        disabled={!creating}
+        onKeyDown={(e) => e.key === 'Enter' && handleConfirmCreate()}
       />
-      <IconButton onClick={handleCreate} color="primary"><AddIcon /></IconButton>
-      <IconButton onClick={onSaveForm} color="success"><SaveIcon /></IconButton>
+
+      <IconButton
+        onClick={onSaveForm}
+        color="success"
+        disabled={!formName || !formName.trim()}
+      >
+        <SaveIcon />
+      </IconButton>
+
       <IconButton onClick={handleExportJSON} color="info" title="Download JSON">
         <DownloadIcon />
       </IconButton>

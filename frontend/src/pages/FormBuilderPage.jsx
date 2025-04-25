@@ -1,4 +1,4 @@
-// ✅ src/pages/FormBuilderPage.jsx
+// ✅ FormBuilderPage.jsx tracks unsaved changes and highlights header
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import FormManagement from '../components/FormManagement';
@@ -19,44 +19,63 @@ const FormBuilderPage = () => {
   const [rows, setRows] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [selectedCellId, setSelectedCellId] = useState(null);
+  const [formReady, setFormReady] = useState(false);
+  const [triggerClearNewFormInput, setTriggerClearNewFormInput] = useState(false);
+  const [initialState, setInitialState] = useState({ rows: [], theme: 'blue-sky' });
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     getAllFormNames().then(setAvailableForms);
   }, []);
 
+  useEffect(() => {
+    const stringify = (obj) => JSON.stringify(obj);
+    const current = stringify({ rows, theme });
+    const saved = stringify(initialState);
+    setHasUnsavedChanges(current !== saved);
+  }, [rows, theme, initialState]);
+
   const handleLoadForm = async (name) => {
+    if (!name) {
+      setFormName('');
+      setRows([]);
+      setTheme('blue-sky');
+      setFormReady(false);
+      return;
+    }
     const form = await getFormByName(name);
     setFormName(name);
     setRows(form.rows || []);
     setTheme(form.theme || 'blue-sky');
+    setInitialState({ rows: form.rows || [], theme: form.theme || 'blue-sky' });
     setSelectedRowId(null);
     setSelectedCellId(null);
+    setFormReady(true);
+    setTriggerClearNewFormInput(true);
   };
 
   const handleCreateForm = async (name) => {
-    const newForm = await createForm(name);
+    await createForm(name);
     setFormName(name);
     setRows([]);
     setTheme('blue-sky');
+    setInitialState({ rows: [], theme: 'blue-sky' });
     setAvailableForms((prev) => [...prev, name]);
-  };
-
-  const cleanRowsBeforeSaving = (rows) => {
-    return rows.map(row => ({
-      ...row,
-      cells: row.cells.map(cell => {
-        const control = cell.control ? { ...cell.control } : null;
-        return {
-          ...cell,
-          control
-        };
-      })
-    }));
+    setSelectedRowId(null);
+    setSelectedCellId(null);
+    setFormReady(false);
   };
 
   const handleSaveForm = async () => {
-    const cleanedRows = cleanRowsBeforeSaving(rows);
-    await saveForm(formName, { formName, theme, rows: cleanedRows });
+    if (!formName || !formName.trim()) {
+      console.warn('Form name is required to save.');
+      alert('Please enter a form name before saving.');
+      return;
+    }
+    await saveForm(formName, { formName, theme, rows });
+    setFormReady(true);
+    setInitialState({ rows, theme });
+    setHasUnsavedChanges(false);
   };
 
   return (
@@ -66,6 +85,7 @@ const FormBuilderPage = () => {
         setRows={setRows}
         selectedCellId={selectedCellId}
         theme={themes[theme]}
+        disabled={!formReady}
       />
       <Box flex={1} display="flex" flexDirection="column" overflow="auto">
         <FormManagement
@@ -78,17 +98,19 @@ const FormBuilderPage = () => {
           theme={theme}
           setTheme={setTheme}
           currentRows={rows}
-        />
-        <RowToolbar
-          rows={rows}
+          formReady={formReady}
           setRows={setRows}
-          selectedRowId={selectedRowId}
+          setFormReady={setFormReady}
+          clearNewFormNameTrigger={triggerClearNewFormInput}
+          onClearNewFormNameHandled={() => setTriggerClearNewFormInput(false)}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
-        <CellToolbar
-          rows={rows}
-          setRows={setRows}
-          selectedCellId={selectedCellId}
-        />
+        {formReady && (
+          <>
+            <RowToolbar rows={rows} setRows={setRows} selectedRowId={selectedRowId} />
+            <CellToolbar rows={rows} setRows={setRows} selectedCellId={selectedCellId} />
+          </>
+        )}
         <GridBuilder
           rows={rows}
           setRows={setRows}
@@ -97,20 +119,22 @@ const FormBuilderPage = () => {
           selectedCellId={selectedCellId}
           setSelectedCellId={setSelectedCellId}
           theme={themes[theme]}
+          disabled={!formReady}
         />
-        <div className="debug-border">
-          <FormPreview
-            rows={rows}
-            theme={themes[theme]}
-          />
-        </div>
+        {formReady && (
+          <div className="debug-border">
+            <FormPreview rows={rows} theme={themes[theme]} />
+          </div>
+        )}
       </Box>
-      <ControlConfigSidebar
-        rows={rows}
-        setRows={setRows}
-        selectedCellId={selectedCellId}
-        theme={themes[theme]}
-      />
+      {formReady && (
+        <ControlConfigSidebar
+          rows={rows}
+          setRows={setRows}
+          selectedCellId={selectedCellId}
+          theme={themes[theme]}
+        />
+      )}
     </Box>
   );
 };

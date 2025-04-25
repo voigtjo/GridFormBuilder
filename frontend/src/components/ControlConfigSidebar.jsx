@@ -1,4 +1,3 @@
-// src/components/ControlConfigSidebar.jsx
 import React from 'react';
 import {
   Box,
@@ -8,7 +7,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Button,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -56,6 +58,22 @@ const ControlConfigSidebar = ({ rows, setRows, selectedCellId, theme }) => {
     setRows(updatedRows);
   };
 
+  const handleDropdownOptionChange = (index, key, value) => {
+    const newOptions = [...(control.options || [])];
+    newOptions[index] = { ...newOptions[index], [key]: value };
+    updateControl({ options: newOptions });
+  };
+
+  const addDropdownOption = () => {
+    const newOptions = [...(control.options || []), { label: 'New Option', value: '' }];
+    updateControl({ options: newOptions });
+  };
+
+  const removeDropdownOption = (index) => {
+    const newOptions = control.options.filter((_, i) => i !== index);
+    updateControl({ options: newOptions });
+  };
+
   if (!control) return null;
 
   return (
@@ -83,33 +101,83 @@ const ControlConfigSidebar = ({ rows, setRows, selectedCellId, theme }) => {
         />
       )}
 
+      {(control.type === 'input' || control.type === 'date' || control.type === 'checkbox') && (
+        <TextField
+          fullWidth
+          label="Label"
+          value={control.label || ''}
+          onChange={(e) => updateControl({ label: e.target.value })}
+          size="small"
+          sx={{ mb: 2 }}
+        />
+      )}
+
       {control.type === 'input' && (
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>Input Type</InputLabel>
+          <Select
+            value={control.inputType || 'text'}
+            label="Input Type"
+            onChange={(e) => updateControl({ inputType: e.target.value })}
+          >
+            <MenuItem value="text">Text</MenuItem>
+            <MenuItem value="integer">Integer</MenuItem>
+            <MenuItem value="number">Number</MenuItem>
+          </Select>
+        </FormControl>
+      )}
+
+      {control.type === 'dropdown' && (
         <>
           <TextField
             fullWidth
-            label="Label"
+            label="Dropdown Label"
             value={control.label || ''}
             onChange={(e) => updateControl({ label: e.target.value })}
             size="small"
             sx={{ mb: 2 }}
           />
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Input Type</InputLabel>
-            <Select
-              value={control.inputType || 'text'}
-              label="Input Type"
-              onChange={(e) => updateControl({ inputType: e.target.value })}
-            >
-              <MenuItem value="text">Text</MenuItem>
-              <MenuItem value="integer">Integer</MenuItem>
-              <MenuItem value="number">Number</MenuItem>
-            </Select>
-          </FormControl>
+
+          <Typography variant="body2" gutterBottom>Options</Typography>
+          {(control.options || []).map((opt, index) => (
+            <Box key={index} display="flex" gap={1} mb={1}>
+              <TextField
+                label="Label"
+                value={opt.label}
+                onChange={(e) => handleDropdownOptionChange(index, 'label', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label="Value"
+                value={opt.value}
+                onChange={(e) => handleDropdownOptionChange(index, 'value', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <IconButton onClick={() => removeDropdownOption(index)} color="error">
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          ))}
+          <Button onClick={addDropdownOption} size="small" variant="outlined">Add Option</Button>
         </>
       )}
 
-      {/* Horizontal Alignment */}
-      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+      {control.type === 'checkbox' && (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={control.checked || false}
+              onChange={(e) => updateControl({ checked: e.target.checked })}
+            />
+          }
+          label="Default Checked"
+          sx={{ mt: 1 }}
+        />
+      )}
+
+      <FormControl fullWidth size="small" sx={{ mt: 3, mb: 2 }}>
         <InputLabel>Horizontal Align</InputLabel>
         <Select
           value={control.hAlign || 'left'}
@@ -123,7 +191,6 @@ const ControlConfigSidebar = ({ rows, setRows, selectedCellId, theme }) => {
         </Select>
       </FormControl>
 
-      {/* Vertical Alignment */}
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <InputLabel>Vertical Align</InputLabel>
         <Select
