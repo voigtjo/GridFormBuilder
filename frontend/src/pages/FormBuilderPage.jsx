@@ -1,4 +1,4 @@
-// ✅ FormBuilderPage.jsx — now saves new form using newFormName
+// ✅ FormBuilderPage.jsx — now passes and uses newFormName correctly
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import FormManagement from '../components/FormManagement';

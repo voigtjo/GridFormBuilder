@@ -1,5 +1,4 @@
-// ✅ FormManagement.jsx — Save button now enabled when typing new form name
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box, MenuItem, Select, TextField, IconButton, Typography
 } from '@mui/material';
@@ -7,12 +6,13 @@ import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import PrintIcon from '@mui/icons-material/Print';
-import { useNavigate } from 'react-router-dom';
 import { themes } from '../utils/themeOptions';
 
 const FormManagement = ({
   formName,
   setFormName,
+  newFormName,
+  setNewFormName,
   availableForms,
   onLoadForm,
   onCreateForm,
@@ -27,9 +27,7 @@ const FormManagement = ({
   onClearNewFormNameHandled,
   hasUnsavedChanges
 }) => {
-  const [newFormName, setNewFormName] = useState('');
-  const [creating, setCreating] = useState(false);
-  const navigate = useNavigate();
+  const [creating, setCreating] = React.useState(false);
 
   useEffect(() => {
     if (clearNewFormNameTrigger) {
@@ -59,7 +57,6 @@ const FormManagement = ({
     const dataStr = JSON.stringify({ formName, theme, rows: currentRows }, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
     a.download = `${formName || 'form'}.json`;
