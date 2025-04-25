@@ -1,4 +1,4 @@
-// ✅ FormBuilderPage.jsx tracks unsaved changes and highlights header
+// ✅ FormBuilderPage.jsx — now saves new form using newFormName
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import FormManagement from '../components/FormManagement';
@@ -14,6 +14,7 @@ import '../styles/print.css';
 
 const FormBuilderPage = () => {
   const [formName, setFormName] = useState('');
+  const [newFormName, setNewFormName] = useState('');
   const [availableForms, setAvailableForms] = useState([]);
   const [theme, setTheme] = useState('blue-sky');
   const [rows, setRows] = useState([]);
@@ -67,12 +68,19 @@ const FormBuilderPage = () => {
   };
 
   const handleSaveForm = async () => {
-    if (!formName || !formName.trim()) {
+    let nameToSave = formName;
+    if (!nameToSave && newFormName?.trim()) {
+      nameToSave = newFormName.trim();
+      setFormName(nameToSave);
+    }
+
+    if (!nameToSave || !nameToSave.trim()) {
       console.warn('Form name is required to save.');
       alert('Please enter a form name before saving.');
       return;
     }
-    await saveForm(formName, { formName, theme, rows });
+
+    await saveForm(nameToSave, { formName: nameToSave, theme, rows });
     setFormReady(true);
     setInitialState({ rows, theme });
     setHasUnsavedChanges(false);
@@ -91,6 +99,8 @@ const FormBuilderPage = () => {
         <FormManagement
           formName={formName}
           setFormName={setFormName}
+          newFormName={newFormName}
+          setNewFormName={setNewFormName}
           availableForms={availableForms}
           onLoadForm={handleLoadForm}
           onCreateForm={handleCreateForm}

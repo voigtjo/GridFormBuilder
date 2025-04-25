@@ -1,4 +1,4 @@
-// ✅ FormManagement.jsx now shows unsaved changes with yellow header
+// ✅ FormManagement.jsx — Save button now enabled when typing new form name
 import React, { useState, useEffect } from 'react';
 import {
   Box, MenuItem, Select, TextField, IconButton, Typography
@@ -115,7 +115,7 @@ const FormManagement = ({
       <IconButton
         onClick={onSaveForm}
         color="success"
-        disabled={!formName || !formName.trim()}
+        disabled={creating ? !newFormName.trim() : !formName || !formName.trim()}
       >
         <SaveIcon />
       </IconButton>
